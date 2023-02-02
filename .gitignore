@@ -1,3 +1,4 @@
 *.out
 bitter.cpp
 .vscode/
+Makefile

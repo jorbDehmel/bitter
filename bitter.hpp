@@ -10,7 +10,8 @@ MIT licence via mit-license.org held by author
 #define BITTER_HPP
 
 #include <iostream>
-#include <cassert>
+#include <sstream>
+#include <string>
 using namespace std;
 
 // A simple bit-reader that latches onto a "host" variable. The variable may be
@@ -36,10 +37,13 @@ public:
 
     // Set a bit of the host's memory
     void set(const unsigned int &Bit, const bool &To);
-    void set(const unsigned int &Byte, const char &To);
+    void set(const unsigned int &Byte, const unsigned char &To);
 
     // Get the size (in bytes) of the host (still works with arrays)
     int size() const;
+
+    // Get the binary representation
+    string to_bin_str(const bool &Fancy = true);
 
 protected:
     T *host;
@@ -48,13 +52,9 @@ protected:
 
 // Output the bits of the host's memory to a stream
 template <class T>
-ostream &operator<<(ostream &strm, const Bitter<T> &b)
+ostream &operator<<(ostream &strm, Bitter<T> &b)
 {
-    cout << "0b";
-    for (int i = 0; i < b.size(); i++)
-    {
-        strm << b[i];
-    }
+    strm << b.to_bin_str(true);
     return strm;
 }
 
@@ -119,12 +119,12 @@ void Bitter<T>::set(const unsigned int &Bit, const bool &To)
 
     if (To)
     {
-        // The thing at data has its Bit % 8'th bit turned positive
+        // The thing at data has its (Bit % 8_'th bit turned positive
         *data |= mask;
     }
     else
     {
-        // The thing at data has its Bit % 8'th bit turned negative
+        // The thing at data has its (Bit % 8)'th bit turned negative
         // (and equals with an inverted mask)
         *data &= ~mask;
     }
@@ -133,7 +133,7 @@ void Bitter<T>::set(const unsigned int &Bit, const bool &To)
 }
 
 template <class T>
-void Bitter<T>::set(const unsigned int &Byte, const char &To)
+void Bitter<T>::set(const unsigned int &Byte, const unsigned char &To)
 {
     if (Byte >= sizeOfHost)
     {
@@ -150,6 +150,29 @@ template <class T>
 int Bitter<T>::size() const
 {
     return sizeOfHost;
+}
+
+template <class T>
+string Bitter<T>::to_bin_str(const bool &Fancy)
+{
+    stringstream strm;
+
+    if (Fancy)
+    {
+        strm << "0b";
+    }
+
+    for (int i = 0; i < sizeOfHost; i++)
+    {
+        if (i % 4 == 0 && Fancy && i != 0)
+        {
+            strm << '\'';
+        }
+
+        strm << (*this)[i];
+    }
+
+    return strm.str();
 }
 
 #endif
