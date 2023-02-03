@@ -30,14 +30,17 @@ public:
     bool operator[](const unsigned int &Bit) const;
 
     // Get a modifiable reference to the host's data starting at a point
-    char *getFrom(const unsigned int &Start);
+    char *getChars(const unsigned int &Start);
+    T *getHost();
 
     // Flip a bit of the host's memory
     void flip(const unsigned int &Bit);
 
     // Set a bit of the host's memory
     void set(const unsigned int &Bit, const bool &To);
-    void set(const unsigned int &Byte, const unsigned char &To);
+
+    // Set a byte of the host's memory starting at a bit
+    void set(const unsigned int &Bit, const unsigned char &To);
 
     // Get the size (in bytes) of the host (still works with arrays)
     int size() const;
@@ -68,19 +71,11 @@ bool Bitter<T>::operator[](const unsigned int &Bit) const
         throw runtime_error("Cannot access out-of-range bit");
     }
 
-    // narrow to char (convenience)
-    unsigned char data = ((unsigned char *)(host))[Bit / 8];
-
-    // bitshift and apply mask
-    data = data << (Bit % 8);
-    data &= 0b1000'0000;
-
-    // create bool
-    return (data == 128);
+    return (((unsigned char *)host)[Bit / 8] & (0b0000'0001 << (Bit % 8))) != 0;
 }
 
 template <class T>
-char *Bitter<T>::getFrom(const unsigned int &Start)
+char *Bitter<T>::getChars(const unsigned int &Start)
 {
     if (Start >= sizeOfHost)
     {
@@ -88,6 +83,12 @@ char *Bitter<T>::getFrom(const unsigned int &Start)
     }
 
     return (char *)(&host) + Start;
+}
+
+template <class T>
+T *Bitter<T>::getHost()
+{
+    return host;
 }
 
 template <class T>
@@ -133,15 +134,18 @@ void Bitter<T>::set(const unsigned int &Bit, const bool &To)
 }
 
 template <class T>
-void Bitter<T>::set(const unsigned int &Byte, const unsigned char &To)
+void Bitter<T>::set(const unsigned int &Bit, const unsigned char &To)
 {
-    if (Byte >= sizeOfHost)
+    if (Bit >= sizeOfHost * 8)
     {
         throw runtime_error("Cannot access out-of-range bit");
     }
 
-    char *data = (char *)(host) + (Byte / 8);
-    *data = To;
+    for (int i = 0; i < 8; i++)
+    {
+        bool toSet = ((To << i) & 0b1000'0000) == 0b1000'0000;
+        set(Bit + i, toSet);
+    }
 
     return;
 }
