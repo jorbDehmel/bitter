@@ -166,7 +166,7 @@ string Bitter<T>::to_bin_str(const bool &Fancy)
         strm << "0b";
     }
 
-    for (int i = 0; i < sizeOfHost; i++)
+    for (int i = sizeOfHost - 1; i >= 0; i--)
     {
         if (i % 4 == 0 && Fancy && i != 0)
         {
